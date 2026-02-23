@@ -44,6 +44,7 @@ abstract class FluffyThemes {
     final colorScheme = ColorScheme.fromSeed(
       brightness: brightness,
       seedColor: seed ?? Color(AppSettings.colorSchemeSeedInt.value),
+      dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
     );
     final isColumnMode = FluffyThemes.isColumnMode(context);
     return ThemeData(
@@ -154,7 +155,7 @@ extension BubbleColorTheme on ThemeData {
 
   Color get secondaryBubbleColor => HSLColor.fromColor(
     brightness == Brightness.light
-        ? colorScheme.tertiary
-        : colorScheme.tertiaryContainer,
+        ? colorScheme.primary
+        : colorScheme.primaryContainer,
   ).withSaturation(0.5).toColor();
 }
