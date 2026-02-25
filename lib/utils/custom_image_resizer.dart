@@ -18,7 +18,12 @@ import 'package:native_imaging/native_imaging.dart' as native;
 Future<MatrixImageFileResizedResponse?> customImageResizer(
   MatrixImageFileResizeArguments arguments,
 ) async {
-  await native.init();
+  try {
+    await native.init();
+  } catch (e, s) {
+    Logs().e('Could not initialize native imaging', e, s);
+    return null;
+  }
 
   var imageBytes = arguments.bytes;
   String? blurhash;

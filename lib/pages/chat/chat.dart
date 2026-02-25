@@ -12,6 +12,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:matrix/matrix.dart';
 import 'package:scroll_to_index/scroll_to_index.dart';
 
@@ -645,7 +646,13 @@ class ChatController extends State<ChatPageWithRoom>
     await showAdaptiveDialog(
       context: context,
       builder: (c) => SendFileDialog(
-        files: [XFile.fromData(image)],
+        files: [
+          XFile.fromData(
+            image,
+            mimeType: 'image/png',
+            name: 'clipboard_image.png',
+          ),
+        ],
         room: room,
         outerContext: context,
         threadRootEventId: activeThreadId,
@@ -1375,34 +1382,48 @@ class ChatController extends State<ChatPageWithRoom>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        Expanded(child: ChatView(this)),
-        ValueListenableBuilder(
-          valueListenable: _displayChatDetailsColumn,
-          builder: (context, displayChatDetailsColumn, _) =>
-              !FluffyThemes.isThreeColumnMode(context) ||
-                  room.membership != Membership.join ||
-                  !displayChatDetailsColumn
-              ? const SizedBox(height: double.infinity, width: 0)
-              : Container(
-                  width: FluffyThemes.columnWidth,
-                  clipBehavior: Clip.hardEdge,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(width: 1, color: theme.dividerColor),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+            () async {
+          final imageBytes = await Pasteboard.image;
+          if (imageBytes != null) {
+            sendImageFromClipBoard(imageBytes);
+          }
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Row(
+          children: [
+            Expanded(child: ChatView(this)),
+            ValueListenableBuilder(
+              valueListenable: _displayChatDetailsColumn,
+              builder: (context, displayChatDetailsColumn, _) =>
+                  !FluffyThemes.isThreeColumnMode(context) ||
+                      room.membership != Membership.join ||
+                      !displayChatDetailsColumn
+                  ? const SizedBox(height: double.infinity, width: 0)
+                  : Container(
+                      width: FluffyThemes.columnWidth,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(width: 1, color: theme.dividerColor),
+                        ),
+                      ),
+                      child: ChatDetails(
+                        roomId: roomId,
+                        embeddedCloseButton: IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: toggleDisplayChatDetailsColumn,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: ChatDetails(
-                    roomId: roomId,
-                    embeddedCloseButton: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: toggleDisplayChatDetailsColumn,
-                    ),
-                  ),
-                ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
